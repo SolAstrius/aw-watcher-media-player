@@ -15,49 +15,41 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-      in
-      {
-        packages.default = pkgs.rustPlatform.buildRustPackage {
+
+        commonArgs = {
           pname = "aw-watcher-media-player";
           version = "1.1.1";
-
           src = ./.;
-
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
               "aw-client-rust-0.1.0" = "sha256-fCjVfmjrwMSa8MFgnC8n5jPzdaqSmNNdMRaYHNbs8Bo=";
             };
           };
-
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-          ];
-
-          buildInputs = with pkgs; [
-            dbus
-            openssl
-          ];
-
           meta = with pkgs.lib; {
             description = "A cross-platform watcher to report currently playing media to ActivityWatch";
-            homepage = "https://github.com/2e3s/aw-watcher-media-player";
+            homepage = "https://github.com/SolAstrius/aw-watcher-media-player";
             license = licenses.mpl20;
-            maintainers = [ ];
             mainProgram = "aw-watcher-media-player";
           };
+        };
+      in
+      {
+        packages = {
+          default = pkgs.rustPlatform.buildRustPackage (commonArgs // {
+            nativeBuildInputs = with pkgs; [ pkg-config ];
+            buildInputs = with pkgs; [ dbus openssl ];
+          });
+
+          static = pkgs.pkgsStatic.rustPlatform.buildRustPackage (commonArgs // {
+            nativeBuildInputs = with pkgs.pkgsStatic; [ pkg-config ];
+            buildInputs = with pkgs.pkgsStatic; [ dbus openssl ];
+          });
         };
 
         devShells.default = pkgs.mkShell {
           inputsFrom = [ self.packages.${system}.default ];
-
-          packages = with pkgs; [
-            cargo
-            rustc
-            rust-analyzer
-            clippy
-            rustfmt
-          ];
+          packages = with pkgs; [ cargo rustc rust-analyzer clippy rustfmt ];
         };
       }
     );
